@@ -12,6 +12,8 @@ Smgnr AE3000 tester.pyw
 
 PyQt5-панель тестирования: вручную задаёт параметры (режим, T₁, T₂, уровень liq, состояние термостата) и отправляет HTTP-запросы к контроллеру (использует curl через subprocess), отображая ответ устройства.
 
+![tester](https://github.com/user-attachments/assets/f942e665-eeef-4970-980f-72f8424a12a6)
+
 Smgnr AE3000 graphics.pyw
 
 Небольшое GUI-приложение на PyQt5,
