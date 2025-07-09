@@ -1,7 +1,8 @@
-#SAMOGONER AE 3000 графики разгонки 08.07.2025
-#pip install PyQt5 psycopg2-binary pandas matplotlib
+# SAMOGONER AE 3000 графики разгонки 09.07.2025
+# pip install PyQt5 psycopg2-binary pandas matplotlib
 
 import sys
+import os
 import psycopg2
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -9,7 +10,8 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout,
-    QPushButton, QLabel, QMessageBox, QDateEdit, QFileDialog
+    QPushButton, QLabel, QMessageBox, QDateEdit,
+    QFileDialog, QCheckBox
 )
 from PyQt5.QtCore import QDate
 
@@ -21,13 +23,14 @@ class TempPlotter(QWidget):
         self.setWindowTitle("График температур")
         self.setGeometry(300, 300, 500, 200)
         self.df = None
+        self.current_dir = None
         self.init_ui()
         self.check_db_availability()
 
     def init_ui(self):
         layout = QVBoxLayout()
 
-        # даты
+        # Даты
         date_layout = QHBoxLayout()
         date_layout.addWidget(QLabel("С:"))
         self.start_date = QDateEdit(calendarPopup=True)
@@ -42,6 +45,11 @@ class TempPlotter(QWidget):
         date_layout.addWidget(self.end_date)
 
         layout.addLayout(date_layout)
+
+        # Чекбокс
+        self.save_checkbox = QCheckBox("Сохранять график при построении")
+        self.save_checkbox.setChecked(False)
+        layout.addWidget(self.save_checkbox)
 
         # Загрузка из CSV
         self.load_csv_btn = QPushButton("Загрузить из CSV")
@@ -109,12 +117,13 @@ class TempPlotter(QWidget):
 
         df.set_index("timestamp", inplace=True)
         self.df = df
-        self.plot_temp(f"с {start_str[:10]} по {end_str[:10]}")
+        self.plot_temp(f"с_{start_str[:10]}_по_{end_str[:10]}")
 
     def load_and_plot_csv(self):
         path, _ = QFileDialog.getOpenFileName(self, "Выбрать CSV", "", "CSV Files (*.csv)")
         if not path:
             return
+
         try:
             df = pd.read_csv(path, parse_dates=["timestamp"])
             df.set_index("timestamp", inplace=True)
@@ -127,8 +136,10 @@ class TempPlotter(QWidget):
             return
 
         self.df = df
-        label = f"CSV: {path.split('/')[-1]}"
-        self.plot_temp(label)
+        # запомним папку для автосохранения
+        self.current_dir = os.path.dirname(path)
+        filename = os.path.basename(path)
+        self.plot_temp(f"CSV_{filename}")
 
     def plot_temp(self, title_suffix=""):
         if self.df is None or self.df.empty:
@@ -144,6 +155,17 @@ class TempPlotter(QWidget):
         plt.legend()
         plt.grid(True)
         plt.tight_layout()
+
+        # автосохранение, если чекбокс установлен
+        if self.save_checkbox.isChecked():
+            filename = f"temperatures_{title_suffix}.png"
+            if self.current_dir:
+                out_path = os.path.join(self.current_dir, filename)
+            else:
+                out_path = filename
+            plt.savefig(out_path, dpi=300)
+            QMessageBox.information(self, "Сохранено", f"График сохранён в\n{out_path}")
+
         plt.show()
 
 if __name__ == "__main__":
