@@ -13,19 +13,19 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 from bs4 import BeautifulSoup
 
-import config  # импортим секреты и URL из config.py
+import config 
 
 # Папка для CSV и графиков
 ARCHIVE_FOLDER = "SMGNR"
 os.makedirs(ARCHIVE_FOLDER, exist_ok=True)
 
-# Текущий CSV-файл (по дате)
+# CSV (по дате)
 current_day = datetime.now().strftime("%Y-%m-%d")
 csv_file = os.path.join(ARCHIVE_FOLDER, f"data_log_{current_day}.csv")
 
 
 def init_db():
-    """Создать таблицу в базе, если ещё не создана."""
+
     conn = psycopg2.connect(
         host=config.PG_HOST,
         port=config.PG_PORT,
@@ -48,7 +48,7 @@ def init_db():
 
 
 def write_to_db(data):
-    """Записать один ряд данных в PostgreSQL."""
+
     try:
         conn = psycopg2.connect(
             host=config.PG_HOST,
@@ -81,7 +81,7 @@ def write_to_db(data):
 
 
 def fetch_data():
-    """Скачать и распарсить HTML со страницы платы."""
+    
     try:
         resp = requests.get(config.URL, timeout=11)
         resp.raise_for_status()
@@ -113,7 +113,7 @@ def fetch_data():
 
 
 def write_to_csv(data):
-    """Добавить строку в CSV; при смене даты переключиться на новый файл."""
+    
     global current_day, csv_file
     if data is None:
         return
@@ -137,7 +137,7 @@ def write_to_csv(data):
 
 
 def save_temp_graph(csv_path, date_str):
-    """Перестроить и сохранить график температур за указанный CSV-день."""
+    
     try:
         df = pd.read_csv(csv_path, parse_dates=["timestamp"])
         df.set_index("timestamp", inplace=True)
@@ -159,7 +159,7 @@ def save_temp_graph(csv_path, date_str):
 
 
 if __name__ == "__main__":
-    # Пытаемся инициализировать БД, но при ошибке работаем только с CSV
+    # инициализация БД, при ошибке только с CSV
     try:
         init_db()
     except Exception as e:
